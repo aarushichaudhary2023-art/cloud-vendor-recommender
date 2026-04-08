@@ -1,10 +1,11 @@
-from flask import Flask, request, jsonify, redirect, session, url_for, send_from_directory
+
+from flask import Flask, request, jsonify
 from flask_cors import CORS
-from authlib.integrations.flask_client import OAuth
-import os
+import random
 
 app = Flask(__name__)
 CORS(app)
+from flask import send_from_directory
 
 # Secret key for session
 app.secret_key = "your-random-secret-key-change-this"
@@ -18,17 +19,7 @@ google = oauth.register(
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'openid email profile'}
 )
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-import random
 
-app = Flask(__name__)
-CORS(app)
-from flask import send_from_directory
-
-@app.route("/")
-def index():
-    return send_from_directory(".", "index.html")
 # ─────────────────────────────────────────────────────────────────────────────
 # Vendor knowledge base
 # ─────────────────────────────────────────────────────────────────────────────
