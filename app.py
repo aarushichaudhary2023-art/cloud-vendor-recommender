@@ -1,12 +1,9 @@
-
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, redirect, url_for, session, send_from_directory
 from flask_cors import CORS
+from authlib.integrations.flask_client import OAuth
 import random
-
 app = Flask(__name__)
 CORS(app)
-from flask import send_from_directory
-
 # Secret key for session
 app.secret_key = "your-random-secret-key-change-this"
 
@@ -14,8 +11,8 @@ app.secret_key = "your-random-secret-key-change-this"
 oauth = OAuth(app)
 google = oauth.register(
     name='google',
-    client_id='YOUR_GOOGLE_CLIENT_ID',
-    client_secret='YOUR_GOOGLE_CLIENT_SECRET',
+   client_id='533558372599-oh7tpiupq95outc50ehu6ontj36869i2.apps.googleusercontent.com',
+   client_secret='****ZbnG',
     server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
     client_kwargs={'scope': 'openid email profile'}
 )
@@ -568,11 +565,9 @@ def health():
 @app.route("/")
 def index():
     return send_from_directory(".", "index.html")
-
 @app.route("/auth/login")
 def login():
-    redirect_uri = url_for("auth_callback", _external=True)
-    return google.authorize_redirect(redirect_uri)
+    return google.authorize_redirect("http://127.0.0.1:5000/auth/callback")
 
 @app.route("/auth/callback")
 def auth_callback():
