@@ -1,3 +1,23 @@
+from flask import Flask, request, jsonify, redirect, session, url_for, send_from_directory
+from flask_cors import CORS
+from authlib.integrations.flask_client import OAuth
+import os
+
+app = Flask(__name__)
+CORS(app)
+
+# Secret key for session
+app.secret_key = "your-random-secret-key-change-this"
+
+# Google OAuth setup
+oauth = OAuth(app)
+google = oauth.register(
+    name='google',
+    client_id='YOUR_GOOGLE_CLIENT_ID',
+    client_secret='YOUR_GOOGLE_CLIENT_SECRET',
+    server_metadata_url='https://accounts.google.com/.well-known/openid-configuration',
+    client_kwargs={'scope': 'openid email profile'}
+)
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import random
@@ -554,5 +574,37 @@ def scenarios():
 @app.route("/api/health", methods=["GET"])
 def health():
     return jsonify({"status": "ok", "version": "2.0.0"})
+@app.route("/")
+def index():
+    return send_from_directory(".", "index.html")
+
+@app.route("/auth/login")
+def login():
+    redirect_uri = url_for("auth_callback", _external=True)
+    return google.authorize_redirect(redirect_uri)
+
+@app.route("/auth/callback")
+def auth_callback():
+    token = google.authorize_access_token()
+    user  = token.get("userinfo")
+    if user:
+        session["user"] = {
+            "name":    user["name"],
+            "email":   user["email"],
+            "picture": user["picture"],
+        }
+    return redirect("/")
+
+@app.route("/auth/logout")
+def logout():
+    session.pop("user", None)
+    return redirect("/")
+
+@app.route("/auth/user")
+def get_user():
+    user = session.get("user")
+    if user:
+        return jsonify({"logged_in": True, "user": user})
+    return jsonify({"logged_in": False})
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)

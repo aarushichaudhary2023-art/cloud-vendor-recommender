@@ -13,6 +13,44 @@
     body{font-family:'Geist',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;transition:background .3s,color .3s}
 
     /* HEADER */
+    .user-chip {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 999px;
+  padding: 4px 12px 4px 4px;
+  font-size: 12px; color: var(--muted);
+  font-family: 'Geist', sans-serif;
+}
+.user-chip img {
+  width: 24px; height: 24px;
+  border-radius: 50%; object-fit: cover;
+}
+.user-name { font-weight: 500; color: var(--text); }
+
+.login-btn {
+  display: flex; align-items: center; gap: 7px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 12px; color: var(--muted);
+  font-family: 'Geist Mono', monospace;
+  text-transform: uppercase; letter-spacing: 0.06em;
+  cursor: pointer; text-decoration: none;
+  transition: all 0.18s;
+}
+.login-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.logout-btn {
+  font-size: 11px; color: var(--muted2);
+  background: none; border: none;
+  cursor: pointer; font-family: 'Geist', sans-serif;
+  text-decoration: underline; padding: 0;
+  transition: color 0.15s;
+}
+.logout-btn:hover { color: var(--rose); }
+
     .site-header{position:fixed;top:0;left:0;right:0;z-index:1000;background:var(--surface);border-bottom:1px solid var(--border2);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);transition:background .3s,border-color .3s}
     .header-inner{max-width:1160px;margin:0 auto;padding:0 1.5rem;height:58px;display:flex;align-items:center;justify-content:space-between;gap:2rem}
     .logo{display:flex;align-items:center;gap:10px;text-decoration:none;flex-shrink:0}
@@ -202,9 +240,12 @@
         <li><a href="#" class="active">Recommend</a></li>
         <li><a href="#" onclick="scrollToAnalysis('radar');return false">Compare</a></li>
         <li><a href="#" onclick="scrollToAnalysis('features');return false">Features</a></li>
-        <li><a href="https://github.com" target="_blank">Log in</a></li>
-      </ul>
     </nav>
+    <div class="topbar">
+  <!-- User info (left side) -->
+  <div id="user-area" style="display:flex;align-items:center;gap:10px;">
+    <!-- filled by JS -->
+  </div>
     <div class="nav-right">
       <span class="nav-badge">v2.0</span>
       <button class="theme-toggle" onclick="toggleTheme()" id="theme-btn" title="Toggle light/dark mode">
@@ -398,13 +439,10 @@
   </div>
   <hr class="footer-divider"/>
   <div class="footer-bottom">
-    <span class="footer-copy">&copy; 2025 CloudMatch &nbsp;&mdash;&nbsp; Department of Quantum AI, VIT University</span>
+    <span class="footer-copy">&copy; 2025 CloudMatch &nbsp;&mdash;&nbsp; VIT University</span>
     <div class="tech-stack">
       <span class="tech-pill">Python 3.11</span>
       <span class="tech-pill">Flask 3.0</span>
-      <span class="tech-pill">Chart.js</span>
-      <span class="tech-pill">Vanilla JS</span>
-      <span class="tech-pill">Docker</span>
     </div>
     <div class="footer-links-row">
       <a href="https://github.com" target="_blank">GitHub</a>
@@ -483,6 +521,41 @@
       alert(`Evaluation complete!\n\nProposed: ${(d.aggregate.proposed.accuracy*100).toFixed(0)}% (${d.aggregate.proposed.correct}/${d.aggregate.proposed.total})\nCheapest: ${(d.aggregate.cheapest.accuracy*100).toFixed(0)}%\nHighest-rated: ${(d.aggregate.highest_rated.accuracy*100).toFixed(0)}%\nRandom: ${(d.aggregate.random.accuracy*100).toFixed(0)}%`);
     } catch { alert('Backend not running. Start with: python app.py'); }
   }
+  // Check login status on page load
+async function checkAuth() {
+  try {
+    const res  = await fetch('/auth/user');
+    const data = await res.json();
+    const area = document.getElementById('user-area');
+
+    if (data.logged_in) {
+      const u = data.user;
+      area.innerHTML = `
+        <div class="user-chip">
+          <img src="${u.picture}" alt="${u.name}" 
+               onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=6ee7a0&color=0d0f0e'" />
+          <span class="user-name">${u.name}</span>
+        </div>
+        <button class="logout-btn" onclick="window.location='/auth/logout'">Sign out</button>`;
+    } else {
+      area.innerHTML = `
+        <a class="login-btn" href="/auth/login">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          Sign in with Google
+        </a>`;
+    }
+  } catch (e) {
+    // If API not reachable, show nothing
+    console.log('Auth check failed:', e);
+  }
+}
+
+checkAuth(); // run on page load
 
   function scrollToAnalysis(tab) {
     if (document.getElementById('results').classList.contains('active')) {
